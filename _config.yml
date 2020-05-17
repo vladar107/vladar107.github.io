@@ -65,8 +65,8 @@ author:
   name: "Apathetic Dev"
   avatar: "/assets/images/bio-photo.jpg"
   bio: >-
-    "Всю свою недолгую жизнь посвятил развработке. Люблю программирования, 
-    .Net, C# и проектировать сложные штуки"
+    Всю свою недолгую жизнь посвятил развработке. Люблю программирования, 
+    .Net, C# и проектировать сложные штуки
   links:
     - label: "Twitter"
       icon: "fab fa-fw fa-twitter-square"
