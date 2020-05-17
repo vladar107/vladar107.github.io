@@ -21,14 +21,13 @@
 title: Apathetic Dev Blog
 title_separator: "|"
 logo: "/assets/images/logo@88.png"
-email: your-email@example.com
-description: >- # this means to ignore newlines until "baseurl:"
-  Write an awesome description for your new site here. You can edit this
-  line in _config.yml. It will appear in your document head meta (for
-  Google search results) and in your feed.xml site description.
+description: >-
+  Блог апатичного разработчика. О разработке, Проектировании, Книгах 
+  и другой полезной инофрмации из мира Software Development. Рассказы 
+  частенько о C# .Net Core, и не только.
 locale: ru-RU
 baseurl: "" # the subpath of your site, e.g. /blog
-url: "vladar107.github.io" # the base hostname & protocol for your site, e.g. http://example.com
+url: "vladar107.github.io"
 twitter_username: apathetic_dev
 github_username:  vladar107
 
@@ -63,10 +62,11 @@ defaults:
       layout: default
 
 author:
-  name     : "Apathetic Dev"
-  avatar   : "/assets/images/bio-photo.jpg"
-  bio      : "Здесь что-то обо мне"
-  location : "Где-то в РФ"
+  name: "Apathetic Dev"
+  avatar: "/assets/images/bio-photo.jpg"
+  bio: >-
+    "Всю свою недолгую жизнь посвятил развработке. Люблю программирования, 
+    .Net, C# и проектировать сложные штуки"
   links:
     - label: "Twitter"
       icon: "fab fa-fw fa-twitter-square"
