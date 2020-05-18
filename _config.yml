@@ -30,6 +30,16 @@ baseurl: "" # the subpath of your site, e.g. /blog
 url: "vladar107.github.io"
 twitter_username: apathetic_dev
 github_username:  vladar107
+paginate: 10 # amount of posts to show
+paginate_path: /blog/page:num/
+search: true
+timezone: "Europe/Moscow"
+comments:
+  provider: "facebook"
+  facebook:
+    appid:
+    num_posts: 5
+    colorscheme: "light"
 
 # Build settings
 theme: minimal-mistakes-jekyll
@@ -83,12 +93,6 @@ footer:
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
       url: "https://github.com/vladar107"
-
-paginate: 10 # amount of posts to show
-paginate_path: /blog/page:num/
-
-search: true
-timezone: "Europe/Moscow"
 
 # Exclude from processing.
 # The following items will not be processed, by default.
