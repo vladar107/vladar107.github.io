@@ -35,11 +35,9 @@ paginate_path: /blog/page:num/
 search: true
 timezone: "Europe/Moscow"
 comments:
-  provider: "facebook"
-  facebook:
-    appid:
-    num_posts: 5
-    colorscheme: "light"
+  provider: "disqus"
+  disqus:
+    shortname: "apathetic_dev"
 
 # Build settings
 remote_theme: mmistakes/minimal-mistakes
