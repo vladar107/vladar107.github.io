@@ -1,6 +1,5 @@
 ---
 permalink: /blog/concurrency-cookbook
-layout: single
 title:  "Обзор Concurrency in C# CookBook"
 tags: [Книги]
 ---
