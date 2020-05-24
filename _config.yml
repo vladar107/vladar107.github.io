@@ -35,9 +35,9 @@ paginate_path: /blog/page:num/
 search: true
 timezone: "Europe/Moscow"
 comments:
-  provider: "disqus"
+  provider: disqus
   disqus:
-    shortname: "apathetic-dev"
+    shortname: apathetic-dev
 
 # Build settings
 remote_theme: mmistakes/minimal-mistakes
@@ -53,9 +53,10 @@ include:
 defaults:
   # _posts
   - scope:
-      path: "/blog"
+      path: ""
       type: posts
     values:
+      author_profile: true
       layout: single
       read_time: true
       comments: true
