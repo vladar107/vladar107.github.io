@@ -23,7 +23,7 @@ title_separator: "|"
 logo: "/assets/images/logo@88.png"
 description: >-
   Блог апатичного разработчика. О разработке, Проектировании, Книгах 
-  и другой полезной инофрмации из мира Software Development. Рассказы 
+  и другой полезной информации из мира Software Development. Рассказы 
   частенько о C# .Net Core, и не только.
 locale: ru-RU
 baseurl: "" # the subpath of your site, e.g. /blog
@@ -78,7 +78,7 @@ author:
   name: "Apathetic Dev"
   avatar: "/assets/images/bio-photo.jpg"
   bio: >-
-    Всю свою недолгую жизнь посвятил развработке. Люблю программирования, 
+    Всю свою недолгую жизнь посвятил разработке. Люблю программирования, 
     .Net, C# и проектировать сложные штуки
   links:
     - label: "Twitter"
