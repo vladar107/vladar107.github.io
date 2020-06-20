@@ -81,6 +81,9 @@ author:
     Всю свою недолгую жизнь посвятил разработке. Люблю программирования, 
     .Net, C# и проектировать сложные штуки
   links:
+    - label: "Telegram"
+      icon: "fab fa-fw fa-telegram"
+      url: "https://t.me/apathetic_dev"
     - label: "Twitter"
       icon: "fab fa-fw fa-twitter-square"
       url: "https://twitter.com/DevApathetic"
@@ -90,6 +93,9 @@ author:
 
 footer:
   links:
+    - label: "Telegram"
+      icon: "fab fa-fw fa-telegram"
+      url: "https://t.me/apathetic_dev"
     - label: "Twitter"
       icon: "fab fa-fw fa-twitter-square"
       url: "https://twitter.com/mmistakes"
@@ -102,6 +108,14 @@ analytics:
   google:
     tracking_id: "UA-69487074-2"
     anonymize_ip: false
+    
+yandex_site_verification: "65025235"
+    
+social:
+  type: "Person"
+  name: "Apathetic Developer"
+  links:
+    - "https://twitter.com/DevApathetic"
 
 # Exclude from processing.
 # The following items will not be processed, by default.
