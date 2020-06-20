@@ -1,0 +1,704 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.19.3 by Michael Rose
+  Copyright 2013-2019 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="ru" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>IOptions VS IOptionsSnapshot VS IOptionsMonitor | Apathetic Dev Blog</title>
+<meta name="description" content="Во время разработки часто возникает потребность для вынесения параметров в конфигурационные файлы. Да и вообще - хранить разные конфигурационный константы в коде является признаком дурного тона. Один из вариантов хранения настроек - использования конфигурационных файлов. .Net Core из коробки умеет работать с такими форматами как: json, ini, xml и другие. Так же есть возможность писать свои провайдеры конфигураций. (Кстати говоря за работу с конфигурациями отвечает сервис IConfiguration и IConfigurationProvider - для доступа к конфигурациям определенного формата и для написания своих провайдеров)">
+
+
+  <meta name="author" content="Apathetic Dev">
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:site_name" content="Apathetic Dev Blog">
+<meta property="og:title" content="IOptions VS IOptionsSnapshot VS IOptionsMonitor">
+<meta property="og:url" content="vladar107.github.io/blog/settings-dotnet-core">
+
+
+  <meta property="og:description" content="Во время разработки часто возникает потребность для вынесения параметров в конфигурационные файлы. Да и вообще - хранить разные конфигурационный константы в коде является признаком дурного тона. Один из вариантов хранения настроек - использования конфигурационных файлов. .Net Core из коробки умеет работать с такими форматами как: json, ini, xml и другие. Так же есть возможность писать свои провайдеры конфигураций. (Кстати говоря за работу с конфигурациями отвечает сервис IConfiguration и IConfigurationProvider - для доступа к конфигурациям определенного формата и для написания своих провайдеров)">
+
+
+
+
+
+
+
+  <meta property="article:published_time" content="2020-06-13T00:00:00+00:00">
+
+
+
+
+
+
+<link rel="canonical" href="vladar107.github.io/blog/settings-dotnet-core">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Apathetic Developer",
+      "url": "vladar107.github.io/",
+      "sameAs": ["https://twitter.com/DevApathetic"]
+    
+  }
+</script>
+
+
+
+
+
+  <meta name="yandex-verification" content="65025235">
+
+
+<!-- end _includes/seo.html -->
+
+
+<link href="/feed.xml" type="application/atom+xml" rel="alternate" title="Apathetic Dev Blog Feed">
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+
+<!--[if IE]>
+  <style>
+    /* old IE unsupported flexbox fixes */
+    .greedy-nav .site-title {
+      padding-right: 3em;
+    }
+    .greedy-nav button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+    }
+  </style>
+<![endif]-->
+
+
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+<meta name="msapplication-TileColor" content="#da532c">
+<meta name="theme-color" content="#ffffff">
+<meta name="google-site-verification" content="5x7EAoerUga09k2QQH2TQqHnI4ZUcRnceW0Yiz6UD8c"/>
+  </head>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <h2 class="screen-reader-text">Skip links</h2>
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+          <a class="site-logo" href="/"><img src="/assets/images/logo@88.png" alt=""></a>
+        
+        <a class="site-title" href="/">
+          Apathetic Dev Blog
+          
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/blog/">Блог</a>
+            </li></ul>
+        
+        <button class="search__toggle" type="button">
+          <span class="visually-hidden">Toggle search</span>
+          <svg class="icon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.99 16">
+            <path d="M15.5,13.12L13.19,10.8a1.69,1.69,0,0,0-1.28-.55l-0.06-.06A6.5,6.5,0,0,0,5.77,0,6.5,6.5,0,0,0,2.46,11.59a6.47,6.47,0,0,0,7.74.26l0.05,0.05a1.65,1.65,0,0,0,.5,1.24l2.38,2.38A1.68,1.68,0,0,0,15.5,13.12ZM6.4,2A4.41,4.41,0,1,1,2,6.4,4.43,4.43,0,0,1,6.4,2Z" transform="translate(-.01)"></path>
+          </svg>
+        </button>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/images/bio-photo.jpg" alt="Apathetic Dev" itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Apathetic Dev</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Всю свою недолгую жизнь посвятил разработке. Люблю программирования,  .Net, C# и проектировать сложные штуки</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+
+      
+        
+          
+            <li><a href="https://t.me/apathetic_dev" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-telegram" aria-hidden="true"></i><span class="label">Telegram</span></a></li>
+          
+        
+          
+            <li><a href="https://twitter.com/DevApathetic" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span></a></li>
+          
+        
+          
+            <li><a href="https://github.com/vladar107" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span></a></li>
+          
+        
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="IOptions VS IOptionsSnapshot VS IOptionsMonitor">
+    <meta itemprop="description" content="Во время разработки часто возникает потребность для вынесения параметров в конфигурационные файлы. Да и вообще - хранить разные конфигурационный константы в коде является признаком дурного тона. Один из вариантов хранения настроек - использования конфигурационных файлов. .Net Core из коробки умеет работать с такими форматами как: json, ini, xml и другие. Так же есть возможность писать свои провайдеры конфигураций. (Кстати говоря за работу с конфигурациями отвечает сервис IConfiguration и IConfigurationProvider - для доступа к конфигурациям определенного формата и для написания своих провайдеров)">
+    <meta itemprop="datePublished" content="2020-06-13T00:00:00+00:00">
+    
+
+    <div class="page__inner-wrap">
+      
+        <header>
+          <h1 id="page-title" class="page__title" itemprop="headline">IOptions VS IOptionsSnapshot VS IOptionsMonitor
+</h1>
+          
+            <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  5 minute read
+
+</p>
+          
+        </header>
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <p>Во время разработки часто возникает потребность для вынесения параметров в конфигурационные файлы. Да и вообще - хранить разные конфигурационный константы в коде является признаком дурного тона. Один из вариантов хранения настроек - использования конфигурационных файлов. .Net Core из коробки умеет работать с такими форматами как: json, ini, xml и другие. Так же есть возможность писать свои провайдеры конфигураций. (Кстати говоря за работу с конфигурациями отвечает сервис IConfiguration и IConfigurationProvider - для доступа к конфигурациям определенного формата и для написания своих провайдеров)</p>
+
+<p>Но главная сложность, на мой взгляд, состоит в том, что у нас имеются аж 3 разные интерфейса для работы с конфигурациями. И не всегда понятно для чего они нужны и какой когда нужно использовать.
+На MSDN есть <a href="https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/options?view=aspnetcore-3.1">статья</a>, которая должна раскрывать все вопросы. Но, как всегда, не все так просто.</p>
+
+<h2 id="ioptions">IOptions</h2>
+
+<blockquote>
+  <p>Does not support:
+Reading of configuration data after the app has started.
+Named options</p>
+
+  <p>Is registered as a Singleton and can be injected into any service lifetime.</p>
+</blockquote>
+
+<p>Вцелом, из описания все сразу становится ясно: загружает данные из конфигурационного файла при старте приложения, не подтягивает никаких изменений. 
+Но у меня большие претензии к Microsoft в плане нейминга. На мой взгляд, если человек недостаточно знаком с технологией, или вообще видит ее в первый раз, то данный интерфейс - это то, что первое придет на ум для использования. И потом, вероятно далеко не сразу, человек выяснит, что то все работает совсем не так, как он задумывал.
+Я привык, что довольно большая часть конфигураций в моих проектах может довольно часто меняться. И лично мне хотелось бы, что бы интерфейс, который буквально кричит о том, что его надо использовать для конфигурации вел себя более очевидно. (Хотя конечно я могу быть не прав, и это только мои придирки. А большая часть людей использует файлы конфигураций по-другому)</p>
+
+<h2 id="ioptionssnapshot">IOptionsSnapshot</h2>
+
+<blockquote>
+  <p>Is useful in scenarios where options should be recomputed on every request</p>
+
+  <p>Is registered as Scoped and therefore cannot be injected into a Singleton service.</p>
+
+  <p>Supports named options</p>
+</blockquote>
+
+<p>Должен подходить для большинства ситуаций, о которых я писал выше. Обновляет информацию о конфигурации при каждом запросе. И что немаловажно, не изменяет ее во время запроса.
+Подходит для множества случаев, например feature toggle.
+MSDN нам говорит, что не может быть заинжекчен в Singletone - на самом деле может (это прям тема для отдельного поста), но тогда и сам он начинает себя вести как Singletone.</p>
+
+<h2 id="ioptionsmonitor">IOptionsMonitor</h2>
+
+<blockquote>
+
+  <p>Is used to retrieve options and manage options notifications for TOptions instances.</p>
+
+  <p>Is registered as a Singleton and can be injected into any service lifetime.</p>
+
+  <p>Supports:
+Change notifications
+Named options
+Reloadable configuration
+Selective options invalidation (IOptionsMonitorCache)</p>
+</blockquote>
+
+<p>По сути - это доступ к вашим конфигурациям в режиме реального времени. Тут стоит быть осторожным. И если вы в процессе какого-то запроса читаете конфигурацию несколько раз - стоит быть готовым, что она может измениться.
+IOptionsMonitorCache - интерфейс для построения обычного кэша на базе IOptionsMonitor.</p>
+
+<h2 id="практика">Практика</h2>
+
+<p>Все тесты проводились на следующем окружении</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sw_vers
+ProductName:	Mac OS X
+ProductVersion:	10.15.5
+BuildVersion:	19F101
+
+dotnet --version
+3.1.301
+</code></pre></div></div>
+
+<p>Мы посмотрели, что говорит нам документация. Теперь давайте посмотри как это работает.</p>
+
+<p>Сразу оставлю ссылку на <a href="https://github.com/vladar107/options-testsing">код</a>, если кто-то захочет ознакомиться подробнее.</p>
+
+<p>В качестве примера будет простое Web API</p>
+
+<div class="language-c# highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="k">public</span> <span class="k">class</span> <span class="nc">Program</span>
+ <span class="p">{</span>
+     <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+     <span class="p">{</span>
+         <span class="nf">CreateHostBuilder</span><span class="p">(</span><span class="n">args</span><span class="p">).</span><span class="nf">Build</span><span class="p">().</span><span class="nf">Run</span><span class="p">();</span>
+     <span class="p">}</span>
+     
+     <span class="k">public</span> <span class="k">static</span> <span class="n">IHostBuilder</span> <span class="nf">CreateHostBuilder</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span> <span class="p">=&gt;</span>
+         <span class="n">Host</span><span class="p">.</span><span class="nf">CreateDefaultBuilder</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+             <span class="p">.</span><span class="nf">ConfigureWebHostDefaults</span><span class="p">(</span><span class="n">webBuilder</span> <span class="p">=&gt;</span>
+             <span class="p">{</span>
+                 <span class="n">webBuilder</span><span class="p">.</span><span class="nf">UseKestrel</span><span class="p">();</span>
+                 <span class="n">webBuilder</span><span class="p">.</span><span class="n">UseStartup</span><span class="p">&lt;</span><span class="n">Startup</span><span class="p">&gt;();</span>
+                 <span class="n">webBuilder</span><span class="p">.</span><span class="nf">UseUrls</span><span class="p">(</span><span class="s">"http://*:5010/"</span><span class="p">);</span>
+             <span class="p">})</span>
+             <span class="p">.</span><span class="nf">UseDefaultServiceProvider</span><span class="p">(</span><span class="n">options</span> <span class="p">=&gt;</span> <span class="n">options</span><span class="p">.</span><span class="n">ValidateScopes</span> <span class="p">=</span> <span class="k">false</span><span class="p">);</span>
+ <span class="p">}</span>
+</code></pre></div></div>
+
+<p>Клиент, который будет к нему обращаться</p>
+
+<div class="language-c# highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+ <span class="p">{</span>
+     <span class="k">using</span> <span class="nn">var</span> <span class="n">client</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">HttpClient</span><span class="p">();</span>
+     <span class="kt">var</span> <span class="n">prevResponse</span> <span class="p">=</span> <span class="n">String</span><span class="p">.</span><span class="n">Empty</span><span class="p">;</span>
+
+     <span class="k">while</span> <span class="p">(</span><span class="k">true</span><span class="p">)</span>
+     <span class="p">{</span>
+         <span class="kt">var</span> <span class="n">response</span> <span class="p">=</span> <span class="k">await</span> <span class="n">client</span><span class="p">.</span><span class="nf">GetStringAsync</span><span class="p">(</span><span class="s">"http://localhost:5010/settings"</span><span class="p">);</span>
+         
+         <span class="k">if</span> <span class="p">(</span><span class="n">response</span> <span class="p">!=</span> <span class="n">prevResponse</span><span class="p">)</span> <span class="c1">// пишем в консоль только, если настройки изменились</span>
+         <span class="p">{</span>
+             <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">response</span><span class="p">);</span>
+             <span class="n">prevResponse</span> <span class="p">=</span> <span class="n">response</span><span class="p">;</span>
+         <span class="p">}</span>
+     <span class="p">}</span>
+ <span class="p">}</span>
+</code></pre></div></div>
+
+<p>В Web API создаем 3 сервиса, который принимает все 3 варианта конфигураций в конструктор и возвращают текущее значение.</p>
+
+<div class="language-c# highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">private</span> <span class="k">readonly</span> <span class="n">IOptions</span><span class="p">&lt;</span><span class="n">TestGroupSettings</span><span class="p">&gt;</span> <span class="n">_testOptions</span><span class="p">;</span>
+<span class="k">private</span> <span class="k">readonly</span> <span class="n">IOptionsSnapshot</span><span class="p">&lt;</span><span class="n">TestGroupSettings</span><span class="p">&gt;</span> <span class="n">_testOptionsSnapshot</span><span class="p">;</span>
+<span class="k">private</span> <span class="k">readonly</span> <span class="n">IOptionsMonitor</span><span class="p">&lt;</span><span class="n">TestGroupSettings</span><span class="p">&gt;</span> <span class="n">_testOptionsMonitor</span><span class="p">;</span>
+
+<span class="k">public</span> <span class="nf">ScopedService</span><span class="p">(</span><span class="n">IOptions</span><span class="p">&lt;</span><span class="n">TestGroupSettings</span><span class="p">&gt;</span> <span class="n">testOptions</span><span class="p">,</span> <span class="n">IOptionsSnapshot</span><span class="p">&lt;</span><span class="n">TestGroupSettings</span><span class="p">&gt;</span> <span class="n">testOptionsSnapshot</span><span class="p">,</span>
+    <span class="n">IOptionsMonitor</span><span class="p">&lt;</span><span class="n">TestGroupSettings</span><span class="p">&gt;</span> <span class="n">testOptionsMonitor</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">_testOptions</span> <span class="p">=</span> <span class="n">testOptions</span><span class="p">;</span>
+    <span class="n">_testOptionsSnapshot</span> <span class="p">=</span> <span class="n">testOptionsSnapshot</span><span class="p">;</span>
+    <span class="n">_testOptionsMonitor</span> <span class="p">=</span> <span class="n">testOptionsMonitor</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Сервисы будут 3х скоупов: Singletone, Scoped и Transient.</p>
+
+<div class="language-c# highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">void</span> <span class="nf">ConfigureServices</span><span class="p">(</span><span class="n">IServiceCollection</span> <span class="n">services</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">services</span><span class="p">.</span><span class="n">Configure</span><span class="p">&lt;</span><span class="n">TestGroupSettings</span><span class="p">&gt;(</span><span class="n">Configuration</span><span class="p">.</span><span class="nf">GetSection</span><span class="p">(</span><span class="s">"TestGroup"</span><span class="p">));</span>
+    
+    <span class="n">services</span><span class="p">.</span><span class="n">AddSingleton</span><span class="p">&lt;</span><span class="n">ISingletonService</span><span class="p">,</span> <span class="n">SingletonService</span><span class="p">&gt;();</span>
+    <span class="n">services</span><span class="p">.</span><span class="n">AddScoped</span><span class="p">&lt;</span><span class="n">IScopedService</span><span class="p">,</span> <span class="n">ScopedService</span><span class="p">&gt;();</span>
+    <span class="n">services</span><span class="p">.</span><span class="n">AddTransient</span><span class="p">&lt;</span><span class="n">ITransientService</span><span class="p">,</span> <span class="n">TransientService</span><span class="p">&gt;();</span>
+
+    <span class="n">services</span><span class="p">.</span><span class="nf">AddControllers</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>В процессе работы нашего Web Api изменяем значение TestGroup.Test файла appsettings.json</p>
+
+<p>Имеем следующую картину:
+Сразу после запуска</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SingletonService IOptions value: 0
+SingletonService IOptionsSnapshot value: 0
+SingletonService IOptionsMonitor value: 0
+
+ScopedService IOptions value: 0
+ScopedService IOptionsSnapshot value: 0
+ScopedService IOptionsMonitor value: 0
+
+TransientService IOptions value: 0
+TransientService IOptionsSnapshot value: 0
+TransientService IOptionsMonitor value: 0
+</code></pre></div></div>
+
+<p>Изменяем нашу настройку и получаем интересную картину
+Сразу после изменения</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SingletonService IOptions value: 0
+SingletonService IOptionsSnapshot value: 0 // не изменилась
+SingletonService IOptionsMonitor value: 0 // не изменилась
+
+ScopedService IOptions value: 0
+ScopedService IOptionsSnapshot value: // стала пустой
+ScopedService IOptionsMonitor value: 0 // не изменилась
+
+TransientService IOptions value: 0
+TransientService IOptionsSnapshot value: // стала пустой
+TransientService IOptionsMonitor value: 0 // не изменилась
+</code></pre></div></div>
+
+<p>Следующий вывод в консоль (конфиг больше не менялся)</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SingletonService IOptions value: 0
+SingletonService IOptionsSnapshot value: 0 // не изменилась
+SingletonService IOptionsMonitor value: 0 // не изменилась
+
+ScopedService IOptions value: 0
+ScopedService IOptionsSnapshot value: changed setting // изменилась
+ScopedService IOptionsMonitor value: 0 // не изменилась
+
+TransientService IOptions value: 0
+TransientService IOptionsSnapshot value: changed setting // изменилась
+TransientService IOptionsMonitor value: 0 // не изменилась
+</code></pre></div></div>
+
+<p>Последний вывод (конфиг также не менялся)</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SingletonService IOptions value: 0
+SingletonService IOptionsSnapshot value: 0 // не изменилась
+SingletonService IOptionsMonitor value: changed setting // изменилась
+
+ScopedService IOptions value: 0
+ScopedService IOptionsSnapshot value: changed setting // изменилась
+ScopedService IOptionsMonitor value: changed setting // изменилась
+
+TransientService IOptions value: 0
+TransientService IOptionsSnapshot value: changed setting // изменилась
+TransientService IOptionsMonitor value: changed setting // изменилась
+</code></pre></div></div>
+
+<p>Что имеем в итоге? А имеем то, что IOptionsMonitor - не такой шустрый, как нам говорит документация. Как можно заметить IOptionsSnapshot может вернуть пустое значение. Но, он работает быстрее, чем IOptionsMonitor. 
+Пока не особо понятно откуда берется это пустое значение. И самое интересное, что подобное поведение проявляется <strong>не всегда</strong>. Как-то через раз в моем примере IOptionsMonitor и IOptionsSnapshot отрабатывают одновременно.</p>
+
+<h2 id="выводы">Выводы</h2>
+
+<p>Если вам нужно передавать конфигурацию, которые никогда в процессе жизни вашего приложения не будут меняться используете IOptions.
+Если ваши конфигурации будут меняться, то тут все как всегда - зависит. Если Вам важно, что бы в скоупе вашего запроса настройки были релевантны на момент запроса, IOptionsSnapshot - ваш выбор (но не для Singletone, в нем значение никогда не изменится). Но стоит учитывать его странности, хотя и столкнуться с ними вряд ли вам придется.
+Если же вам нужны наиболее актуальные значения (или почти) используйте IOptionsMonitor.</p>
+
+<p>Буду рад, если вы запустите пример у себя, и расскажете, повторяется подобное поведение или нет. Возможно мы имеем баг на MacOS, а может это by design.
+Продолжу разбираться с этой темой, а пока завел <a href="https://github.com/dotnet/runtime/issues/37860">issue</a>, может там прояснят такое поведение.</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+
+
+        
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2020-06-13T00:00:00+00:00">June 13, 2020</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+
+  <a href="https://twitter.com/intent/tweet?text=IOptions+VS+IOptionsSnapshot+VS+IOptionsMonitor%20vladar107.github.io%2Fblog%2Fsettings-dotnet-core" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=vladar107.github.io%2Fblog%2Fsettings-dotnet-core" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=vladar107.github.io%2Fblog%2Fsettings-dotnet-core" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/blog/self-improvement" class="pagination--pager" title="Надо ли развиваться самому?
+">Previous</a>
+    
+    
+      <a href="#" class="pagination--pager disabled">Next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You May Also Enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/blog/self-improvement" rel="permalink">Надо ли развиваться самому?
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  2 minute read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">В последнее время довольно часто приходилось слышать, что работодатель заставляет развиваться, и пугает санкциями, если работник не будет развиваться.
+
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title" itemprop="headline">
+      
+        <a href="/blog/concurrency-cookbook" rel="permalink">Обзор Concurrency in C# CookBook
+</a>
+      
+    </h2>
+    
+      <p class="page__meta"><i class="far fa-clock" aria-hidden="true"></i> 
+
+
+
+
+  less than 1 minute read
+
+</p>
+    
+    <p class="archive__item-excerpt" itemprop="description">Не смог пройти мимо такой книги. Совершенно случайно увидел ее и сразу захотел прочитать.
+Собственно через пару дней она уже была у меня. И через 3 дня она з...</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+      <div class="search-content">
+        <div class="search-content__inner-wrap"><form class="search-content__form" onkeydown="return event.key != 'Enter';">
+    <label class="sr-only" for="search">
+      Enter your search term...
+    </label>
+    <input type="search" id="search" class="search-input" tabindex="-1" placeholder="Enter your search term..." />
+  </form>
+  <div id="results" class="results"></div></div>
+
+      </div>
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+
+    
+      
+        
+          <li><a href="https://t.me/apathetic_dev" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-telegram" aria-hidden="true"></i> Telegram</a></li>
+        
+      
+        
+          <li><a href="https://twitter.com/mmistakes" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+          <li><a href="https://github.com/vladar107" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+    
+
+    <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2020 Apathetic Dev Blog. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script src="/assets/js/lunr/lunr.min.js"></script>
+<script src="/assets/js/lunr/lunr-store.js"></script>
+<script src="/assets/js/lunr/lunr-en.js"></script>
+
+
+
+
+    <div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.5";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+  
+
+
+
+
+
+  </body>
+</html>

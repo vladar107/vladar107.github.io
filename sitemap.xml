@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<url>
+<loc>vladar107.github.io/blog/concurrency-cookbook</loc>
+<lastmod>2020-05-17T00:00:00+00:00</lastmod>
+</url>
+<url>
+<loc>vladar107.github.io/blog/self-improvement</loc>
+<lastmod>2020-05-24T00:00:00+00:00</lastmod>
+</url>
+<url>
+<loc>vladar107.github.io/blog/settings-dotnet-core</loc>
+<lastmod>2020-06-13T00:00:00+00:00</lastmod>
+</url>
+<url>
+<loc>vladar107.github.io/404</loc>
+</url>
+<url>
+<loc>vladar107.github.io/blog/</loc>
+</url>
+<url>
+<loc>vladar107.github.io/</loc>
+</url>
+</urlset>

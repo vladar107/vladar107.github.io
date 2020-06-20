@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.5">Jekyll</generator><link href="vladar107.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="vladar107.github.io/" rel="alternate" type="text/html" /><updated>2020-06-20T09:31:12+00:00</updated><id>vladar107.github.io/feed.xml</id><title type="html">Apathetic Dev Blog</title><subtitle>Блог апатичного разработчика. О разработке, Проектировании, Книгах  и другой полезной информации из мира Software Development. Рассказы  частенько о C# .Net Core, и не только.</subtitle><author><name>Apathetic Dev</name></author><entry><title type="html">IOptions VS IOptionsSnapshot VS IOptionsMonitor</title><link href="vladar107.github.io/blog/settings-dotnet-core" rel="alternate" type="text/html" title="IOptions VS IOptionsSnapshot VS IOptionsMonitor" /><published>2020-06-13T00:00:00+00:00</published><updated>2020-06-13T00:00:00+00:00</updated><id>vladar107.github.io/blog/settings</id><content type="html" xml:base="vladar107.github.io/blog/settings-dotnet-core">&lt;p&gt;Во время разработки часто возникает потребность для вынесения параметров в конфигурационные файлы. Да и вообще - хранить разные конфигурационный константы в коде является признаком дурного тона. Один из вариантов хранения настроек - использования конфигурационных файлов. .Net Core из коробки умеет работать с такими форматами как: json, ini, xml и другие. Так же есть возможность писать свои провайдеры конфигураций. (Кстати говоря за работу с конфигурациями отвечает сервис IConfiguration и IConfigurationProvider - для доступа к конфигурациям определенного формата и для написания своих провайдеров)&lt;/p&gt;
+
+&lt;p&gt;Но главная сложность, на мой взгляд, состоит в том, что у нас имеются аж 3 разные интерфейса для работы с конфигурациями. И не всегда понятно для чего они нужны и какой когда нужно использовать.
+На MSDN есть &lt;a href=&quot;https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/options?view=aspnetcore-3.1&quot;&gt;статья&lt;/a&gt;, которая должна раскрывать все вопросы. Но, как всегда, не все так просто.&lt;/p&gt;
+
+&lt;h2 id=&quot;ioptions&quot;&gt;IOptions&lt;/h2&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Does not support:
+Reading of configuration data after the app has started.
+Named options&lt;/p&gt;
+
+  &lt;p&gt;Is registered as a Singleton and can be injected into any service lifetime.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Вцелом, из описания все сразу становится ясно: загружает данные из конфигурационного файла при старте приложения, не подтягивает никаких изменений. 
+Но у меня большие претензии к Microsoft в плане нейминга. На мой взгляд, если человек недостаточно знаком с технологией, или вообще видит ее в первый раз, то данный интерфейс - это то, что первое придет на ум для использования. И потом, вероятно далеко не сразу, человек выяснит, что то все работает совсем не так, как он задумывал.
+Я привык, что довольно большая часть конфигураций в моих проектах может довольно часто меняться. И лично мне хотелось бы, что бы интерфейс, который буквально кричит о том, что его надо использовать для конфигурации вел себя более очевидно. (Хотя конечно я могу быть не прав, и это только мои придирки. А большая часть людей использует файлы конфигураций по-другому)&lt;/p&gt;
+
+&lt;h2 id=&quot;ioptionssnapshot&quot;&gt;IOptionsSnapshot&lt;/h2&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Is useful in scenarios where options should be recomputed on every request&lt;/p&gt;
+
+  &lt;p&gt;Is registered as Scoped and therefore cannot be injected into a Singleton service.&lt;/p&gt;
+
+  &lt;p&gt;Supports named options&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Должен подходить для большинства ситуаций, о которых я писал выше. Обновляет информацию о конфигурации при каждом запросе. И что немаловажно, не изменяет ее во время запроса.
+Подходит для множества случаев, например feature toggle.
+MSDN нам говорит, что не может быть заинжекчен в Singletone - на самом деле может (это прям тема для отдельного поста), но тогда и сам он начинает себя вести как Singletone.&lt;/p&gt;
+
+&lt;h2 id=&quot;ioptionsmonitor&quot;&gt;IOptionsMonitor&lt;/h2&gt;
+
+&lt;blockquote&gt;
+
+  &lt;p&gt;Is used to retrieve options and manage options notifications for TOptions instances.&lt;/p&gt;
+
+  &lt;p&gt;Is registered as a Singleton and can be injected into any service lifetime.&lt;/p&gt;
+
+  &lt;p&gt;Supports:
+Change notifications
+Named options
+Reloadable configuration
+Selective options invalidation (IOptionsMonitorCache)&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;По сути - это доступ к вашим конфигурациям в режиме реального времени. Тут стоит быть осторожным. И если вы в процессе какого-то запроса читаете конфигурацию несколько раз - стоит быть готовым, что она может измениться.
+IOptionsMonitorCache - интерфейс для построения обычного кэша на базе IOptionsMonitor.&lt;/p&gt;
+
+&lt;h2 id=&quot;практика&quot;&gt;Практика&lt;/h2&gt;
+
+&lt;p&gt;Все тесты проводились на следующем окружении&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;sw_vers
+ProductName:	Mac OS X
+ProductVersion:	10.15.5
+BuildVersion:	19F101
+
+dotnet --version
+3.1.301
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Мы посмотрели, что говорит нам документация. Теперь давайте посмотри как это работает.&lt;/p&gt;
+
+&lt;p&gt;Сразу оставлю ссылку на &lt;a href=&quot;https://github.com/vladar107/options-testsing&quot;&gt;код&lt;/a&gt;, если кто-то захочет ознакомиться подробнее.&lt;/p&gt;
+
+&lt;p&gt;В качестве примера будет простое Web API&lt;/p&gt;
+
+&lt;div class=&quot;language-c# highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt; &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Program&lt;/span&gt;
+ &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+     &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;args&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+     &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+         &lt;span class=&quot;nf&quot;&gt;CreateHostBuilder&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;args&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;Build&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;().&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;Run&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+     &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+     
+     &lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IHostBuilder&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;CreateHostBuilder&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;args&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
+         &lt;span class=&quot;n&quot;&gt;Host&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;CreateDefaultBuilder&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;args&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+             &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;ConfigureWebHostDefaults&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;webBuilder&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt;
+             &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                 &lt;span class=&quot;n&quot;&gt;webBuilder&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;UseKestrel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+                 &lt;span class=&quot;n&quot;&gt;webBuilder&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;UseStartup&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Startup&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;();&lt;/span&gt;
+                 &lt;span class=&quot;n&quot;&gt;webBuilder&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;UseUrls&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;http://*:5010/&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+             &lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
+             &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;UseDefaultServiceProvider&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;options&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;options&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ValidateScopes&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;false&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+ &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Клиент, который будет к нему обращаться&lt;/p&gt;
+
+&lt;div class=&quot;language-c# highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt; &lt;span class=&quot;k&quot;&gt;static&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;Task&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;Main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[]&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;args&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+ &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+     &lt;span class=&quot;k&quot;&gt;using&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;client&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;new&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;HttpClient&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+     &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;prevResponse&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Empty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+     &lt;span class=&quot;k&quot;&gt;while&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+     &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+         &lt;span class=&quot;kt&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;response&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;client&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;GetStringAsync&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;http://localhost:5010/settings&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+         
+         &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;response&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;!=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;prevResponse&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// пишем в консоль только, если настройки изменились&lt;/span&gt;
+         &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+             &lt;span class=&quot;n&quot;&gt;Console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;WriteLine&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;response&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+             &lt;span class=&quot;n&quot;&gt;prevResponse&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;response&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+         &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+     &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+ &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;В Web API создаем 3 сервиса, который принимает все 3 варианта конфигураций в конструктор и возвращают текущее значение.&lt;/p&gt;
+
+&lt;div class=&quot;language-c# highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TestGroupSettings&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_testOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IOptionsSnapshot&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TestGroupSettings&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_testOptionsSnapshot&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;readonly&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IOptionsMonitor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TestGroupSettings&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_testOptionsMonitor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ScopedService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TestGroupSettings&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;testOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;IOptionsSnapshot&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TestGroupSettings&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;testOptionsSnapshot&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;IOptionsMonitor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TestGroupSettings&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;testOptionsMonitor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;_testOptions&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;testOptions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;_testOptionsSnapshot&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;testOptionsSnapshot&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;_testOptionsMonitor&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;testOptionsMonitor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Сервисы будут 3х скоупов: Singletone, Scoped и Transient.&lt;/p&gt;
+
+&lt;div class=&quot;language-c# highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;public&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;ConfigureServices&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IServiceCollection&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;services&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;services&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Configure&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;TestGroupSettings&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Configuration&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;GetSection&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;TestGroup&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;));&lt;/span&gt;
+    
+    &lt;span class=&quot;n&quot;&gt;services&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AddSingleton&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ISingletonService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;SingletonService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;();&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;services&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AddScoped&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;IScopedService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ScopedService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;();&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;services&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;AddTransient&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;ITransientService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;TransientService&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;();&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;services&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;AddControllers&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;В процессе работы нашего Web Api изменяем значение TestGroup.Test файла appsettings.json&lt;/p&gt;
+
+&lt;p&gt;Имеем следующую картину:
+Сразу после запуска&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;SingletonService IOptions value: 0
+SingletonService IOptionsSnapshot value: 0
+SingletonService IOptionsMonitor value: 0
+
+ScopedService IOptions value: 0
+ScopedService IOptionsSnapshot value: 0
+ScopedService IOptionsMonitor value: 0
+
+TransientService IOptions value: 0
+TransientService IOptionsSnapshot value: 0
+TransientService IOptionsMonitor value: 0
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Изменяем нашу настройку и получаем интересную картину
+Сразу после изменения&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;SingletonService IOptions value: 0
+SingletonService IOptionsSnapshot value: 0 // не изменилась
+SingletonService IOptionsMonitor value: 0 // не изменилась
+
+ScopedService IOptions value: 0
+ScopedService IOptionsSnapshot value: // стала пустой
+ScopedService IOptionsMonitor value: 0 // не изменилась
+
+TransientService IOptions value: 0
+TransientService IOptionsSnapshot value: // стала пустой
+TransientService IOptionsMonitor value: 0 // не изменилась
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Следующий вывод в консоль (конфиг больше не менялся)&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;SingletonService IOptions value: 0
+SingletonService IOptionsSnapshot value: 0 // не изменилась
+SingletonService IOptionsMonitor value: 0 // не изменилась
+
+ScopedService IOptions value: 0
+ScopedService IOptionsSnapshot value: changed setting // изменилась
+ScopedService IOptionsMonitor value: 0 // не изменилась
+
+TransientService IOptions value: 0
+TransientService IOptionsSnapshot value: changed setting // изменилась
+TransientService IOptionsMonitor value: 0 // не изменилась
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Последний вывод (конфиг также не менялся)&lt;/p&gt;
+
+&lt;div class=&quot;language-plaintext highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;SingletonService IOptions value: 0
+SingletonService IOptionsSnapshot value: 0 // не изменилась
+SingletonService IOptionsMonitor value: changed setting // изменилась
+
+ScopedService IOptions value: 0
+ScopedService IOptionsSnapshot value: changed setting // изменилась
+ScopedService IOptionsMonitor value: changed setting // изменилась
+
+TransientService IOptions value: 0
+TransientService IOptionsSnapshot value: changed setting // изменилась
+TransientService IOptionsMonitor value: changed setting // изменилась
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Что имеем в итоге? А имеем то, что IOptionsMonitor - не такой шустрый, как нам говорит документация. Как можно заметить IOptionsSnapshot может вернуть пустое значение. Но, он работает быстрее, чем IOptionsMonitor. 
+Пока не особо понятно откуда берется это пустое значение. И самое интересное, что подобное поведение проявляется &lt;strong&gt;не всегда&lt;/strong&gt;. Как-то через раз в моем примере IOptionsMonitor и IOptionsSnapshot отрабатывают одновременно.&lt;/p&gt;
+
+&lt;h2 id=&quot;выводы&quot;&gt;Выводы&lt;/h2&gt;
+
+&lt;p&gt;Если вам нужно передавать конфигурацию, которые никогда в процессе жизни вашего приложения не будут меняться используете IOptions.
+Если ваши конфигурации будут меняться, то тут все как всегда - зависит. Если Вам важно, что бы в скоупе вашего запроса настройки были релевантны на момент запроса, IOptionsSnapshot - ваш выбор (но не для Singletone, в нем значение никогда не изменится). Но стоит учитывать его странности, хотя и столкнуться с ними вряд ли вам придется.
+Если же вам нужны наиболее актуальные значения (или почти) используйте IOptionsMonitor.&lt;/p&gt;
+
+&lt;p&gt;Буду рад, если вы запустите пример у себя, и расскажете, повторяется подобное поведение или нет. Возможно мы имеем баг на MacOS, а может это by design.
+Продолжу разбираться с этой темой, а пока завел &lt;a href=&quot;https://github.com/dotnet/runtime/issues/37860&quot;&gt;issue&lt;/a&gt;, может там прояснят такое поведение.&lt;/p&gt;</content><author><name>Apathetic Dev</name></author><category term="DotNetCore" /><summary type="html">Во время разработки часто возникает потребность для вынесения параметров в конфигурационные файлы. Да и вообще - хранить разные конфигурационный константы в коде является признаком дурного тона. Один из вариантов хранения настроек - использования конфигурационных файлов. .Net Core из коробки умеет работать с такими форматами как: json, ini, xml и другие. Так же есть возможность писать свои провайдеры конфигураций. (Кстати говоря за работу с конфигурациями отвечает сервис IConfiguration и IConfigurationProvider - для доступа к конфигурациям определенного формата и для написания своих провайдеров)</summary></entry><entry><title type="html">Надо ли развиваться самому?</title><link href="vladar107.github.io/blog/self-improvement" rel="alternate" type="text/html" title="Надо ли развиваться самому?" /><published>2020-05-24T00:00:00+00:00</published><updated>2020-05-24T00:00:00+00:00</updated><id>vladar107.github.io/blog/self-improvment</id><content type="html" xml:base="vladar107.github.io/blog/self-improvement">&lt;p&gt;В последнее время довольно часто приходилось слышать, что работодатель заставляет развиваться, и пугает санкциями, если работник не будет развиваться.&lt;/p&gt;
+
+&lt;h2 id=&quot;зачем-мне-развиваться&quot;&gt;Зачем мне развиваться?&lt;/h2&gt;
+
+&lt;p&gt;Начну с немного клешированной фразы - мир не стоит на месте, а особенно мир IT. Технологии сменяют друг друга. Появляются новые подходы, технологии, инструменты. И эти новшества планомерно внедряются в нашу жизнь. И как развивается продукт над которым мы работаем, так и должны развиваться мы. Кроме того, ваше развитие поможет вам как в ежедневной работе, при смене работы и для продвижения по должностной лестнице.&lt;/p&gt;
+
+&lt;h2 id=&quot;значит-работодатель-молодец&quot;&gt;ЗНачит работодатель молодец?&lt;/h2&gt;
+
+&lt;p&gt;Тут как всегда нет однозначного ответа. Давайте окунемся в проблему поподробнее. Рассмотрим 2 примеров.&lt;/p&gt;
+
+&lt;p&gt;В первом примере наш работодатель заставляет нас развиваться. Он инвестирует в это. Оплачивает вам полностью или частично курсы, конференции и тп. И не маловажно, что работодатель готов выделять вам время на это.&lt;/p&gt;
+
+&lt;p&gt;Второй пример - Работодатель не делает ничего. Но требует, что бы сотрудник развивался в свободное время.&lt;/p&gt;
+
+&lt;h2 id=&quot;хороший-работодатель&quot;&gt;Хороший работодатель&lt;/h2&gt;
+
+&lt;p&gt;Пожалуй идеальные условия, и не пользоваться ими довольно глупо. Тем не менее не все люди этого хотят. И в целом, это нормально. Это их право. Возможно когда-нибудь потом, он вспомнит, что не пользовался имеющимися возможностями. Но это не тема данного блога.
+Мое мнение по данному вопросу - нужно однозначно пользоваться. И делать все, что в твоих силах, что бы развиваться.&lt;/p&gt;
+
+&lt;h2 id=&quot;плохой-работодатель&quot;&gt;Плохой работодатель&lt;/h2&gt;
+
+&lt;p&gt;Пусть у нас будет работник, который не хочет развиваться. А тем более, когда возможностей нет. 
+Работника можно понять. 9 часов на работе. 2 часа дорога. Дома жена, дети. Когда развиваться? Но давайте посмотрим на работодателя. Правильно ли, что работодатель хочет, что бы его сотрудники развивались? Ну кажется, что в этом заинтересованы все, во всяком случае так думает работодатель. Ну как мы видим, в этом могут быть заинтересованы не все. Вторая часть проблемы - санкции к сотруднику, если он не хочет развиваться. Логика работодателя, вероятно, следующая: мир развивается, все развивается и ты - будь добр. 
+Однако, тут хочется возразить. В большинстве случаев, когда берут человека на работу - он удовлетворяет каким-то требованиям. Наш мир, конечно очень динамичный, но все же, кажется, что на несколько лет его скилов должно хватить. Плюс, даже если человек ничего не делает дополнительно, то все равно развивается. И применять какие-то санкции только из-за развития, как минимум, очень странно.&lt;/p&gt;
+
+&lt;h2 id=&quot;таа-что-делать&quot;&gt;Таа что делать?&lt;/h2&gt;
+
+&lt;p&gt;Если ваш работодатель пугает вас санкциями (или вы этот работодатель), то стоит принять какой-то план развития. Причем, что крайне важно, этот план должен устраивать обе стороны. Этот план будит стимулировать работника к развитию. И не будет провоцировать работодателя на слишком строгое поведени. Всем понятно, что от них надо и все работают на общее благо.&lt;/p&gt;</content><author><name>Apathetic Dev</name></author><category term="Саморазвитие" /><summary type="html">В последнее время довольно часто приходилось слышать, что работодатель заставляет развиваться, и пугает санкциями, если работник не будет развиваться.</summary></entry><entry><title type="html">Обзор Concurrency in C# CookBook</title><link href="vladar107.github.io/blog/concurrency-cookbook" rel="alternate" type="text/html" title="Обзор Concurrency in C# CookBook" /><published>2020-05-17T00:00:00+00:00</published><updated>2020-05-17T00:00:00+00:00</updated><id>vladar107.github.io/blog/concurrency-cookbook</id><content type="html" xml:base="vladar107.github.io/blog/concurrency-cookbook">&lt;p&gt;Не смог пройти мимо такой книги. Совершенно случайно увидел ее и сразу захотел прочитать.
+Собственно через пару дней она уже была у меня. И через 3 дня она закончилась.&lt;/p&gt;
+
+&lt;h2 id=&quot;о-книге&quot;&gt;О книге&lt;/h2&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/concurrency-ck-cover.jpg&quot; alt=&quot;Обложка&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Полное название книги: &lt;strong&gt;Concurrency in C# Cookbook: Asynchronous, Parallel, and Multithreaded Programming 2nd Edition&lt;/strong&gt; за авторством &lt;strong&gt;Stephen Cleary&lt;/strong&gt;
+Книга рассказывает о удобстве и возможностях конкурентного программирования в мире современного .Net. На протяжении всей книги рассматриваются несколько подходов: async, Task based, DataFlow и Rx (реактивное программирование).
+По каждому из подходов коротко рассматривается что это такое, когда стоит применять и приведены несколько рецептов.
+Одно из наиболее интересного, на мой взгляд, это то как возможно объединять эти подходы, или как адаптеры одних подходов к другим.&lt;/p&gt;
+
+&lt;h2 id=&quot;плюсы&quot;&gt;Плюсы&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Для новичков, лучше тяжело найти.&lt;/li&gt;
+  &lt;li&gt;Понятно рассмотрены каждый подход.&lt;/li&gt;
+  &lt;li&gt;Много примеров.&lt;/li&gt;
+  &lt;li&gt;Много рецептов.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;минусы&quot;&gt;Минусы&lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Хотелось более глубокого погружения в технические глубины. (не минус, а личная придирка)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&quot;вывод&quot;&gt;Вывод&lt;/h2&gt;
+
+&lt;p&gt;Приятное, хорошо структурированное повествование. Порекомендовал бы всем, может только за исключениям тех, кто очень хорошо разбирается в обозначенных выше темах.&lt;/p&gt;</content><author><name>Apathetic Dev</name></author><category term="Книги" /><summary type="html">Не смог пройти мимо такой книги. Совершенно случайно увидел ее и сразу захотел прочитать. Собственно через пару дней она уже была у меня. И через 3 дня она закончилась.</summary></entry></feed>
